@@ -1,0 +1,11 @@
+torch>=2.2.0
+transformers>=4.31.0
+scipy>=1.11.0
+soundfile>=0.12.1
+librosa>=0.10.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
+pytest>=8.0.0

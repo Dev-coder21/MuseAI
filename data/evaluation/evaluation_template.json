@@ -1,0 +1,73 @@
+{
+  "project": "MuseAI — AI Music Composer",
+  "model": "facebook/musicgen-small",
+  "evaluation_criteria": [
+    "Prompt Match (1-5)",
+    "Mood Match (1-5)",
+    "Instrument/Style Match (1-5)",
+    "Musical Quality (1-5)",
+    "Overall Satisfaction (1-5)"
+  ],
+  "human_evaluations": [
+    {
+      "generation_id": "94948a3d0e8d",
+      "prompt": "Calm piano music for studying.",
+      "ratings": {
+        "prompt_match": 5,
+        "mood_match": 5,
+        "instrument_style_match": 5,
+        "musical_quality": 4,
+        "overall_satisfaction": 5
+      },
+      "evaluator_notes": "Pleasant, soothing piano melody with soft attack and decay."
+    },
+    {
+      "generation_id": "150ce0385e0b",
+      "prompt": "Energetic electronic music for a workout.",
+      "ratings": {
+        "prompt_match": 5,
+        "mood_match": 4,
+        "instrument_style_match": 4,
+        "musical_quality": 4,
+        "overall_satisfaction": 4
+      },
+      "evaluator_notes": "Upbeat synth rhythm with steady driving tempo."
+    },
+    {
+      "generation_id": "cdd0cb637c23",
+      "prompt": "Emotional cinematic music with strings.",
+      "ratings": {
+        "prompt_match": 4,
+        "mood_match": 5,
+        "instrument_style_match": 5,
+        "musical_quality": 4,
+        "overall_satisfaction": 4.5
+      },
+      "evaluator_notes": "Rich string pad arrangement with crescendo dynamics."
+    },
+    {
+      "generation_id": "f2d8e71c0758",
+      "prompt": "Peaceful ambient music for meditation.",
+      "ratings": {
+        "prompt_match": 5,
+        "mood_match": 5,
+        "instrument_style_match": 4,
+        "musical_quality": 4.5,
+        "overall_satisfaction": 4.5
+      },
+      "evaluator_notes": "Soft flute and drone texture with long sustain."
+    },
+    {
+      "generation_id": "1cdb85d88133",
+      "prompt": "Fast upbeat jazz music with piano and drums.",
+      "ratings": {
+        "prompt_match": 4,
+        "mood_match": 4,
+        "instrument_style_match": 4,
+        "musical_quality": 4,
+        "overall_satisfaction": 4
+      },
+      "evaluator_notes": "Syncopated piano and percussive rhythm."
+    }
+  ]
+}

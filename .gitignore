@@ -1,0 +1,43 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Outputs / Large generated assets (preserve directory structure via .gitkeep if needed)
+outputs/audio/*.wav
+outputs/waveforms/*.png
+outputs/spectrograms/*.png
+outputs/metadata/*.json
+!outputs/**/.gitkeep
+
+# Flutter / Dart build artifacts
+flutter_app/.dart_tool/
+flutter_app/.idea/
+flutter_app/.vscode/
+flutter_app/build/
+flutter_app/.packages
+flutter_app/pubspec.lock
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Model cache / weights
+models/*.safetensors
+models/*.bin
