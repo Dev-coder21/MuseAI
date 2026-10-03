@@ -41,3 +41,6 @@ flutter_app/pubspec.lock
 # Model cache / weights
 models/*.safetensors
 models/*.bin
+
+# Local Claude Code / editor tooling
+.claude/

@@ -2,14 +2,16 @@
 
 MuseAI is an end-to-end Generative AI application that empowers users to compose original musical compositions from natural-language descriptions and structured musical preferences. 
 
-Powered by **Meta's MusicGen-small** model via **Hugging Face Transformers** and accelerated locally on **Apple Silicon GPU (MPS)**, MuseAI generates WAV audio compositions, analyzes audio properties, and visualizes waveforms and frequency spectrograms in a Flutter application.
+Powered by **Meta's MusicGen-small** model via **Hugging Face Transformers** and accelerated locally on **Apple Silicon GPU (MPS)**, MuseAI generates WAV audio compositions, analyzes audio properties, and visualizes waveforms and frequency spectrograms in a web app that works on desktop and phone.
+
+**Live site:** https://dev-coder21.github.io/MuseAI/ (composing needs the backend running locally, see below)
 
 ---
 
 ## 🏗️ System Architecture
 
 ```text
-Flutter Frontend
+Web Frontend (React · web/)
        │
        ▼ (REST HTTP / JSON)
 FastAPI Backend (Python 3.11)
@@ -31,8 +33,8 @@ FastAPI Backend (Python 3.11)
 * **Backend Framework**: Python 3.11, FastAPI, Uvicorn, Pydantic
 * **AI & Acceleration**: PyTorch 2.14.0 (MPS / Metal Performance Shaders for Apple Silicon)
 * **Audio Analysis & Visualization**: Librosa, SoundFile, NumPy, SciPy, Matplotlib
-* **Frontend Application**: Flutter 3.41.6, Dart 3.11.4
-* **Audio Playback**: `audioplayers` package
+* **Frontend**: Vite, React, TypeScript, Motion (Framer Motion), deployed to GitHub Pages
+* **Audio Playback & Analysis**: Web Audio API (decoding, FFT, live scope)
 
 ---
 
@@ -50,15 +52,10 @@ MuseAI/
 │   ├── visualizer.py         # Waveform & Spectrogram PNG plot renderer
 │   ├── history.py            # JSON metadata history manager
 │   └── requirements.txt      # Backend dependencies
-├── flutter_app/
-│   ├── lib/
-│   │   ├── main.dart         # Flutter entry point & theme configuration
-│   │   ├── theme/            # Dark glassmorphic theme tokens
-│   │   ├── models/           # Data models (MusicRequest, MusicResult)
-│   │   ├── services/         # ApiService & AudioPlayerService
-│   │   ├── widgets/          # GlassCard & Custom WaveformPainter
-│   │   └── screens/          # HomeScreen, GeneratingScreen, ResultScreen, HistoryScreen
-│   └── pubspec.yaml          # Flutter dependencies
+├── web/                      # Website (Vite + React + TypeScript), see web/README.md
+│   ├── src/components/       # Intro, Hero, Composer, Presets, Library, ...
+│   └── src/lib/              # API client, audio player + analysis, motion
+├── design/reference.html     # Approved design the website is built from
 ├── outputs/
 │   ├── audio/                # Generated .wav audio compositions
 │   ├── waveforms/            # Rendered waveform .png images
@@ -83,7 +80,7 @@ MuseAI/
 ### 1. Prerequisites
 * macOS with Apple Silicon M1 (or compatible PyTorch environment)
 * Python 3.11 (installed in `./.venv`)
-* Flutter SDK (v3.41.6+)
+* Node.js 20+ and npm
 
 ### 2. Running the FastAPI Backend
 
@@ -106,43 +103,17 @@ PYTHONPATH=. .venv/bin/uvicorn backend.app:app --host 127.0.0.1 --port 8000
 The API will be live at `http://127.0.0.1:8000`. You can test the health endpoint at:
 `http://127.0.0.1:8000/health`
 
-### 3. Running the Flutter Frontend
+### 3. Running the Web Frontend
 
 Open a new terminal window:
 
 ```bash
-cd flutter_app
-
-# Fetch Flutter dependencies
-flutter pub get
-
-# Launch the Flutter app (macOS Desktop, iOS Simulator, or Chrome)
-flutter run -d macos
+cd web
+npm install
+npm run dev -- --port 5180
 ```
 
----
-
-## 📡 API Endpoints Overview
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/health` | Check backend health, device (`mps`), and model ID |
-| `POST` | `/generate` | Generate music composition from prompt & controls |
-| `GET` | `/audio/{id}` | Serve generated WAV audio file |
-| `GET` | `/waveform/{id}` | Serve rendered waveform PNG image |
-| `GET` | `/spectrogram/{id}` | Serve rendered spectrogram PNG image |
-| `POST` | `/regenerate` | Re-trigger generation for a previous composition |
-| `GET` | `/history` | Fetch history of past generation records |
-
----
-
-## 🧪 Testing & Verification
-
-### Run Automated Backend Unit & Integration Tests
-
-```bash
-PYTHONPATH=. .venv/bin/pytest -v
-```
+Then open http://localhost:5180. The backend address is set by `VITE_API_URL` in `web/.env` (defaults to `http://127.0.0.1:8000`). More detail in [web/README.md](web/README.md).
 
 ### Run 5-Prompt Manual Verification Test Suite
 
