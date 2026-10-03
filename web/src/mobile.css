@@ -1,0 +1,49 @@
+/* Phone and touch additions on top of the reference CSS. */
+.err{margin-top:14px;font-size:.76rem;color:var(--red-deep);border-left:2px solid var(--red);padding-left:10px}
+.btn[disabled]{cursor:not-allowed}
+.play[disabled]{cursor:default}
+
+/* Touch: bigger hit areas without changing the look on mouse devices. */
+@media (pointer:coarse){
+  .chip{min-height:40px;padding:8px 14px}
+  .chips{gap:8px}
+  .tracks li{min-height:44px}
+  .tracks label{padding-block:12px}
+  .vol input{height:14px}
+  .vol input::-webkit-slider-thumb{width:28px;height:36px}
+  .vol input::-moz-range-thumb{width:28px;height:36px}
+  .dur input{height:36px}
+  .replay,.intro a{padding-block:10px}
+  .btn{min-height:48px}
+}
+
+/* Library row controls */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+td.act{white-space:nowrap;text-align:right}
+td.act .pill{margin-right:10px}
+.rowplay{font:inherit;font-size:.8rem;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:inline-grid;place-items:center;vertical-align:middle;transition:background .15s,color .15s}
+.rowplay:hover{background:var(--ink);color:var(--panel)}
+tr.empty td{color:var(--mute);padding-block:22px}
+
+/* Library on phones: each take becomes a card, no sideways scrolling. */
+@media (max-width:640px){
+  .log{overflow:visible;border:0;background:none}
+  .log table{min-width:0;display:block}
+  .log thead{display:none}
+  .log tbody{display:grid;gap:12px}
+  .log tr{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;position:relative}
+  .log td{display:contents;border:0;padding:0}
+  .log td[data-l]::before{content:attr(data-l);font-family:var(--f-display);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);align-self:center}
+  .log td.brief{max-width:none!important}
+  .log td canvas{width:100%;max-width:200px}
+  .log td.act{display:flex;grid-column:1/-1;justify-content:space-between;align-items:center;margin-top:6px}
+  .log td.act .pill{margin-right:auto}
+  .log td.act:not(:has(.pill)){justify-content:flex-end}
+  .rowplay{width:44px;height:44px}
+  .log tr.empty{display:block}
+  .log tr.empty td{display:block}
+}
+
+/* Library rows slide in once the table is on screen; a just-composed row flashes instead. */
+html.motion .log.in tbody tr{animation:rowIn .8s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*90ms)}
+html.motion .log.in tbody tr.fresh{animation:fresh 1.6s ease-out}
