@@ -47,3 +47,9 @@ tr.empty td{color:var(--mute);padding-block:22px}
 /* Library rows slide in once the table is on screen; a just-composed row flashes instead. */
 html.motion .log.in tbody tr{animation:rowIn .8s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*90ms)}
 html.motion .log.in tbody tr.fresh{animation:fresh 1.6s ease-out}
+
+/* Intro on phones: keep the title and tagline clear of the bottom HUD (act, frame counter, Skip). */
+@media (max-width:700px){
+  #intro .i-word{bottom:calc(env(safe-area-inset-bottom,0px) + 150px)}
+  #intro .i-tag{bottom:calc(env(safe-area-inset-bottom,0px) + 116px);padding-inline:16px;letter-spacing:.14em}
+}
