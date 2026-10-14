@@ -524,7 +524,7 @@ Open `http://localhost:5180` in your browser.
 cd MuseAI
 
 # Run automated backend tests
-PYTHONPATH=. .venv/bin/pytest -v
+PYTHONPATH=. .venv/bin/pytest tests/ -v
 
 # Run the 5-prompt manual benchmark script
 .venv/bin/python test_manual_prompts.py
