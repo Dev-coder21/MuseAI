@@ -14,7 +14,7 @@
 5. [Prompt Engineering & Compilation Framework](#5-prompt-engineering--compilation-framework)
 6. [Digital Signal Processing (DSP) & Visualization Pipeline](#6-digital-signal-processing-dsp--visualization-pipeline)
 7. [Backend Microservice Architecture (FastAPI)](#7-backend-microservice-architecture-fastapi)
-8. [Cross-Platform Frontend Architecture (Flutter & Dart)](#8-cross-platform-frontend-architecture-flutter--dart)
+8. [Web Frontend Architecture (Vite, React & TypeScript)](#8-web-frontend-architecture-vite-react--typescript)
 9. [Empirical Benchmarks & Verification Test Results](#9-empirical-benchmarks--verification-test-results)
 10. [Generative AI Human Evaluation & Quality Analysis](#10-generative-ai-human-evaluation--quality-analysis)
 11. [Limitations, Engineering Tradeoffs & Future Roadmap](#11-limitations-engineering-tradeoffs--future-roadmap)
@@ -31,9 +31,9 @@
 ### Key Technical Highlights:
 * **Generative Audio Model**: Meta’s state-of-the-art **MusicGen-Small** (~300M parameter autoregressive transformer) coupled with an **EnCodec** Residual Vector Quantized (RVQ) neural audio tokenizer.
 * **Hardware Acceleration**: Accelerated locally on **Apple Silicon Metal Performance Shaders (MPS)** via PyTorch 2.14, cutting audio synthesis latency to ~10.3–12.0 seconds per composition (compared to >55 seconds on CPU).
-* **Dual Visualization**: Live extraction of normalized 100-point amplitude vectors for 60fps Flutter UI rendering, alongside server-side Short-Time Fourier Transform (**STFT**) frequency spectrograms and waveform images.
+* **Dual Visualization**: Live extraction of normalized 100-point amplitude vectors for the history view, server-side Short-Time Fourier Transform (**STFT**) spectrogram and waveform images, and an in-browser waveform and spectrogram computed from the decoded audio with the Web Audio API.
 * **Backend Tier**: Python 3.11 with asynchronous **FastAPI**, implementing a singleton model loader, REST API contracts, validation with Pydantic, and persistent JSON metadata records.
-* **Frontend Tier**: Cross-platform **Flutter 3.41 / Dart 3.11** application boasting a dark glassmorphic interface, dynamic preset selector, integrated audio playback engine, waveform visualizers, WAV downloading, and single-click regeneration.
+* **Frontend Tier**: **Vite + React 19 + TypeScript** web app (`web/`) with a Motion-animated intro, a turntable-style hero, quick presets, a composer with structured controls, Web Audio playback with a seekable waveform and spectrogram, a take library, and single-click regeneration.
 * **Verification & Validation**: 100% test pass rate across 7 automated unit/integration tests and 5 multi-genre benchmark test suites evaluated across 5 human listening dimensions (Prompt Match, Mood Match, Instrument Match, Musicality, and Overall Satisfaction).
 
 ---
@@ -63,15 +63,15 @@ The application is structured into decoupled frontend, backend, AI inference, an
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           FLUTTER CLIENT APPLICATION                       │
-│  (Dart 3.11, Flutter 3.41 - macOS / iOS / Android / Web)                   │
+│                       REACT WEB APPLICATION (web/)                         │
+│  (Vite + React 19 + TypeScript, Motion, Web Audio API - any browser)       │
 │                                                                             │
 │  ┌───────────────┐  ┌──────────────────┐  ┌───────────────┐  ┌───────────┐  │
-│  │  HomeScreen   │  │ GeneratingScreen │  │ ResultScreen  │  │HistoryView│  │
+│  │ Hero/Presets  │  │     Composer     │  │  Brief/Result │  │  Library  │  │
 │  └───────┬───────┘  └────────┬─────────┘  └───────┬───────┘  └─────┬─────┘  │
 │          │                   │                    │                │        │
 │          ▼                   ▼                    ▼                ▼        │
-│    [ApiService] ──── (REST HTTP / JSON) ──── [AudioPlayerService]           │
+│     [lib/api.ts] ──── (REST HTTP / JSON) ──── [lib/player.ts]               │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼ HTTP Requests
@@ -106,14 +106,14 @@ The application is structured into decoupled frontend, backend, AI inference, an
 
 ### Complete End-to-End Execution Sequence
 1. **User Interaction**: The user enters an idea or clicks a preset (e.g., "Workout") and tweaks dropdowns (e.g., Mood: *Energetic*, Genre: *Electronic*, Tempo: *Fast*).
-2. **Payload Dispatch**: Flutter compiles a `POST /generate` request with text and control dictionaries.
+2. **Payload Dispatch**: The web app (`web/src/lib/api.ts`) sends a `POST /generate` request with the prompt text and control values.
 3. **Prompt Processing**: `PromptProcessor` parses attributes, validates inputs, and synthesizes a prompt:  
    `"Energetic electronic music for a workout., (in a energetic, fast tempo style suitable for workout)"`
 4. **Model Inference**: `MusicGenerator` feeds the prompt to the loaded `MusicGen-small` model running on `mps` (Apple Silicon GPU). In ~10 seconds, it predicts 250 autoregressive audio codebook tokens representing 5 seconds of audio.
 5. **EnCodec Decoding**: The EnCodec neural decoder converts discrete codebook indices back into continuous multi-frequency waveforms at 32,000 Hz.
 6. **DSP Analysis**: `AudioProcessor` loads the WAV, measures peak amplitude, RMS energy, and downsamples 160,000 samples into 100 normalized amplitude points for UI rendering.
 7. **Visual Asset Generation**: `Visualizer` uses Librosa and Matplotlib to export a styled waveform PNG and a full Short-Time Fourier Transform (STFT) frequency spectrogram PNG.
-8. **Client Rendering**: Flutter displays the `ResultScreen`, downloads the waveform points into a custom canvas painter, streams the audio via `AudioPlayerService`, and enables download and regeneration.
+8. **Client Rendering**: The composer fetches the WAV, decodes it with the Web Audio API (`web/src/lib/player.ts`), draws the waveform and an 0–8 kHz spectrogram on canvas from the decoded samples, plays it with a seekable playhead, and enables regeneration. The take is added to the library list.
 
 ---
 
@@ -190,7 +190,7 @@ When audio is generated, `backend/audio_processor.py` analyzes the raw signal:
   $$\text{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} x[n]^2}$$
 * **Waveform Downsampling (100-Point Vector)**: Downsamples $N \approx 160,000$ points into 100 windowed segments. In each segment, it calculates peak absolute amplitude and normalizes:
   $$p_i = \frac{\max_{j \in \text{window}_i} |x[j]|}{\max_k(p_k)}$$
-  This lightweight JSON array (`waveform_points`) is sent to Flutter for client-side 60fps canvas rendering.
+  This lightweight JSON array (`waveform_points`) is returned with each take; the web app's library uses it to draw a small waveform for every past take without downloading the audio.
 
 ### 6.2 Visual Asset Generation (`Visualizer`)
 * **Waveform PNG**: Matplotlib (`Agg` backend) plots amplitude over time using a high-contrast dark palette (`#121324` background, `#6C5CE7` electric purple stroke, `#00CEC9` cyan translucent fill).
@@ -209,7 +209,7 @@ The backend (`backend/app.py`) is built with Python 3.11, FastAPI, and Uvicorn.
 
 ### 7.1 Server Configuration & Lifecycle
 * **Singleton Model Lifecycle**: `MusicGenerator` is implemented as a thread-safe singleton. On server startup (`@app.on_event("startup")`), the model is pre-warmed onto the Apple MPS device once, eliminating the 15-second loading overhead from individual requests.
-* **CORS Middleware**: Explicitly enabled to support Flutter web, desktop, and mobile clients connecting from disparate origins.
+* **CORS Middleware**: Enabled (`allow_origins=["*"]`) so the web app can call the API from its own dev server or a phone on the same network.
 
 ### 7.2 REST API Specification
 | Method | Endpoint | Request Body | Response Body | HTTP Status | Description |
@@ -224,42 +224,33 @@ The backend (`backend/app.py`) is built with Python 3.11, FastAPI, and Uvicorn.
 
 ---
 
-## 8. CROSS-PLATFORM FRONTEND ARCHITECTURE (FLUTTER & DART)
+## 8. WEB FRONTEND ARCHITECTURE (VITE, REACT & TYPESCRIPT)
 
-The user interface (`flutter_app/`) is built on Flutter 3.41.6 and Dart 3.11.4.
+The user interface (`web/`) is a single-page **Vite + React 19 + TypeScript** app. It uses **Motion** for the intro animation and the browser's **Web Audio API** for decoding, analysis and playback. It talks to the FastAPI backend through `VITE_API_URL` (default `http://127.0.0.1:8000`, set in `web/.env`).
 
-### 8.1 Design Philosophy: Dark Glassmorphism
-The visual system (`lib/theme/app_theme.dart`) uses modern dark-mode aesthetic standards:
-* **Background**: Deep Indigo Night (`#0C0D1A`).
-* **Card Surface**: Translucent tinted glass (`#16182E` with `#2C2F55` border stroke).
-* **Primary Accent**: Electric Violet (`#6C5CE7`).
-* **Secondary Accent**: Neon Cyan (`#00CEC9`).
-* **Typography**: Clean, geometric typography powered by Google Fonts `Outfit`.
+### 8.1 Design System
+The visual design is ported unchanged from the approved mock-up `design/reference.html` into `web/src/styles.css`, with phone and touch additions in `web/src/mobile.css`:
+* **Typography**: Archivo for display text, IBM Plex Mono for labels and data.
+* **Layout**: A warm off-white "hardware" aesthetic, with a turntable disc, knobs and a speaker grille in the hero, and a red accent.
+* **Responsive**: The same layout adapts from phones to desktops; touch devices get larger targets and simplified hover effects.
 
-### 8.2 Application Screens
-1. **`HomeScreen`**:
-   * Header with MuseAI branding and server connection status pill.
-   * Quick-preset action pills (Study, Meditation, Workout, Sleep, Cinematic, Gaming) that autofill prompt text and musical controls.
-   * Expandable customizer with dropdowns and sliders for fine-tuning Mood, Genre, Instrument, Intensity, Tempo, Purpose, and Duration.
-   * Large gradient "Generate Music" CTA button.
-2. **`GeneratingScreen`**:
-   * Animated pulsing visualizer mimicking live generation.
-   * Active prompt summary cards and step status display ("Conditioning model...", "Synthesizing audio codebooks...").
-3. **`ResultScreen`**:
-   * Integrated audio player with Play/Pause, time scrubber, and elapsed/total duration counters.
-   * Dynamic CustomPainter Waveform rendered natively from the 100-point amplitude array.
-   * Dual visualization tabs allowing toggling between the rendered waveform plot and the frequency spectrogram.
-   * Generation metadata chips (Model, Hardware Device, Sample Rate, Generation Latency).
-   * Secondary action row: "Regenerate" and "Download WAV".
-4. **`HistoryScreen`**:
-   * Chronological view of past compositions with playback, timestamps, prompt inspection, and one-click replay.
+### 8.2 Page Sections (`web/src/components/`)
+1. **`Intro`**: A Motion-animated opening sequence with a *Skip intro* button and a *Replay intro* link in the header.
+2. **`Hero`** and **`Knob`**: A turntable disc that plays the latest take (each ring is a frequency band, each dot a moment where that band is loud), plus knobs for mood, tempo and intensity.
+3. **`Ticker`**, **`WordsToSound`** and **`HowItWorks`**: Scroll-driven explanations of how a sentence becomes a prompt and then audio.
+4. **`Presets`**: Quick starts (*Study Piano*, *Meditation*, *Workout Beats*, *Cinematic Strings*, *Lo-Fi Chill*) that fill in the prompt and controls.
+5. **`Composer`** and **`Brief`**:
+   * Prompt box plus structured controls for Mood, Genre, Instrument, Intensity, Tempo and Purpose, and a duration slider (up to 30 s).
+   * A live preview of the compiled prompt, mirroring `backend/prompt_processor.py` (`web/src/lib/data.ts`).
+   * Generation steps (*Processing prompt, Generating audio, Analyzing waveform, Rendering spectrogram, Saving to history*).
+   * Result panel with a tap-to-seek waveform, an 0–8 kHz spectrogram, Play and **Regenerate**.
+6. **`Library`**: Past takes from `GET /history`, each with its compiled brief, style, length, generation time, a small waveform drawn from `waveform_points`, and a play button.
+7. **`SpecSheet`** and **`Footer`**: The technical specification and credits.
 
-### 8.3 Core Services
-* **`ApiService`**: Handles HTTP communication with timeouts and error parsing.
-* **`AudioPlayerService`**: Wraps the `audioplayers` package, providing reactive streams for playback state (Playing, Paused, Stopped), duration, and current position.
-* **`WaveformPainter`**: A Flutter `CustomPainter` that draws smoothed vertical bars with gradient fills matching playback progress.
-
----
+### 8.3 Core Modules (`web/src/lib/`)
+* **`api.ts`**: Typed calls to `/health`, `/generate`, `/regenerate` and `/history`, with error handling.
+* **`player.ts`**: Fetches and decodes WAV audio (`decodeAudioData`), computes the peaks, spectrogram image and disc pattern in the browser (`analyze()`), and plays audio through an `AudioBufferSourceNode` connected to an `AnalyserNode`, exposing playback progress for the playhead.
+* **`motion.ts`** and **`canvas.ts`**: Scroll-linked motion, the custom cursor, and DPR-aware canvas sizing.
 
 ## 9. EMPIRICAL BENCHMARKS & VERIFICATION TEST RESULTS
 
@@ -345,9 +336,9 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 ### Slide 1: Title & Introduction
 * **Headline**: MuseAI: Intelligent Generative Music Composition
 * **Subtitle**: Transforming Natural Language & Musical Attributes into Studio Compositions with Meta MusicGen and Apple Silicon Acceleration
-* **Visual**: MuseAI Logo, Flutter application mockups showing Waveform and Spectrogram.
+* **Visual**: MuseAI logo and screenshots of the web app showing the waveform and spectrogram.
 * **Speaker Script**:
-  > *"Good morning everyone. Today we are presenting MuseAI, an end-to-end Generative AI platform that empowers anyone to compose original, studio-quality music from plain English descriptions. Built on Meta’s MusicGen model and accelerated locally using Apple Silicon GPU technology, MuseAI combines deep learning, digital signal processing, and cross-platform Flutter engineering into a cohesive product."*
+  > *"Good morning everyone. Today we are presenting MuseAI, an end-to-end Generative AI platform that empowers anyone to compose original, studio-quality music from plain English descriptions. Built on Meta’s MusicGen model and accelerated locally using Apple Silicon GPU technology, MuseAI combines deep learning, digital signal processing, and a React web interface into a cohesive product."*
 
 ### Slide 2: The Problem: Music Creation is Inaccessible
 * **Bullet Points**:
@@ -359,12 +350,12 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 
 ### Slide 3: System Architecture & End-to-End Pipeline
 * **Bullet Points**:
-  - Flutter 3.41 Frontend (Dart): Dark glassmorphic design, dynamic preset picker, audio player.
+  - React Web Frontend (Vite + TypeScript): Turntable-style design, quick presets, Web Audio player.
   - FastAPI Backend (Python 3.11): REST endpoints, singleton model caching, Pydantic validation.
   - Generative Engine: Meta MusicGen-Small on Apple MPS GPU.
   - DSP & Visualizer Engine: Real-time 100-point amplitude extraction and STFT Spectrogram generation.
 * **Speaker Script**:
-  > *"Our architecture consists of two decoupled systems: A cross-platform Flutter application and a Python FastAPI backend. The backend manages a singleton MusicGen engine, audio analysis via Librosa and SoundFile, and an automated visualization pipeline."*
+  > *"Our architecture consists of two decoupled systems: A React web application and a Python FastAPI backend. The backend manages a singleton MusicGen engine, audio analysis via Librosa and SoundFile, and an automated visualization pipeline."*
 
 ### Slide 4: AI Model Deep Dive: Meta MusicGen & EnCodec
 * **Bullet Points**:
@@ -386,19 +377,19 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 ### Slide 6: Digital Signal Processing & Dual Visualizations
 * **Bullet Points**:
   - No Placeholders: Every visualization is derived directly from the generated audio.
-  - 100-Point Amplitude Vector: Calculated on the backend, normalized, and rendered via Flutter's `CustomPainter` at 60fps.
+  - 100-Point Amplitude Vector: Calculated on the backend and normalized; the web app uses it to draw a waveform for each past take in the library.
   - STFT Spectrogram: Short-Time Fourier Transform visualizes frequency distribution (0–16 kHz) over time in decibels.
 * **Speaker Script**:
-  > *"To ensure technical authenticity, we developed a DSP pipeline using Librosa and SoundFile. We compute acoustic metrics like RMS energy and peak amplitude, and generate two distinct visual assets: a normalized amplitude vector for real-time Flutter waveform rendering, and an STFT frequency spectrogram showing harmonic energy across time."*
+  > *"To ensure technical authenticity, we developed a DSP pipeline using Librosa and SoundFile. We compute acoustic metrics like RMS energy and peak amplitude, and generate two distinct visual assets: a normalized amplitude vector for lightweight waveform previews in the web app, and an STFT frequency spectrogram showing harmonic energy across time."*
 
-### Slide 7: Frontend UX & Glassmorphic Interface
+### Slide 7: Frontend UX & Web Interface
 * **Bullet Points**:
-  - Custom design system: Electric Violet (`#6C5CE7`) and Neon Cyan (`#00CEC9`) accents.
-  - Quick-start presets (Study, Workout, Meditation, Cinematic).
-  - Built-in audio playback engine with position seeking.
-  - Single-click regeneration and WAV file download.
+  - Design ported from an approved mock-up: Archivo and IBM Plex Mono, turntable disc, knobs and speaker grille.
+  - Quick-start presets (Study Piano, Meditation, Workout Beats, Cinematic Strings, Lo-Fi Chill).
+  - In-browser Web Audio playback with a tap-to-seek waveform and spectrogram.
+  - Single-click regeneration and a library of past takes.
 * **Speaker Script**:
-  > *"The Flutter interface emphasizes usability. With quick presets, intuitive controls, responsive generation animations, and seamless playback, MuseAI feels like a finished creative tool rather than a developer dashboard."*
+  > *"The web interface emphasizes usability. With quick presets, intuitive controls, visible generation steps, and seamless playback, MuseAI feels like a finished creative tool rather than a developer dashboard."*
 
 ### Slide 8: Hardware Acceleration & Performance Benchmarks
 * **Bullet Points**:
@@ -440,24 +431,24 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 ### Slide 12: Conclusion & Q&A
 * **Bullet Points**:
   - Summary: Fully operational, verified, end-to-end Generative AI music application.
-  - Integrates NLP, deep learning, DSP, REST APIs, and modern Flutter UI.
+  - Integrates NLP, deep learning, DSP, REST APIs, and a modern React web UI.
   - Open for questions and discussion.
 * **Speaker Script**:
-  > *"Thank you for your time. MuseAI demonstrates how modern deep learning and audio engineering can come together in a responsive, cross-platform product. We welcome any questions from the panel."*
+  > *"Thank you for your time. MuseAI demonstrates how modern deep learning and audio engineering can come together in a responsive web product. We welcome any questions from the panel."*
 
 ---
 
 ## 13. LIVE PROJECT DEMONSTRATION SCRIPT & DEFENSE Q&A
 
 ### 13.1 Live Demo Step-by-Step Run-Sheet
-1. **Launch Confirmation**: Ensure the FastAPI server is running (`uvicorn backend.app:app`) and the Flutter app is open.
-2. **Preset Demo**: In the Flutter app, click the **"Study"** preset button. Show how the prompt field fills with *"Calm piano music for studying"* and the controls automatically set Mood: *Calm*, Genre: *Ambient*, Instrument: *Piano*, Tempo: *Slow*.
-3. **Generation**: Click **"Generate Music"**. Point out the `GeneratingScreen` with the animated pulsing visualizer. Highlight the backend console logs showing token generation on the `mps` device.
-4. **Result Inspection**: Once on `ResultScreen`:
+1. **Launch Confirmation**: Ensure the FastAPI server is running (`uvicorn backend.app:app`) and the web app is open (`npm run dev` in `web/`).
+2. **Preset Demo**: In the Presets section, click **"Study Piano"**. Show how the prompt fills with *"Calm peaceful piano music for studying"* and the controls set Mood: *Calm*, Genre: *Ambient*, Instrument: *Piano*, Tempo: *Slow*, Purpose: *Study*.
+3. **Generation**: Click **Compose**. Point out the generation steps and the live prompt preview. Highlight the backend console logs showing token generation on the `mps` device.
+4. **Result Inspection**: In the result panel:
    * Press **Play**; let the panel hear the audio clarity.
-   * Point out the **Custom Waveform** syncing with playback.
-   * Switch the visualizer tab to show the **Spectrogram**; explain how the vertical axis represents frequencies up to 16 kHz and colors indicate energy.
-   * Point out the metadata chips showing the 32,000 Hz sample rate and ~10.5s generation time.
+   * Point out the **waveform playhead** following playback; tap the waveform to seek.
+   * Show the **spectrogram** and explain that the vertical axis is frequency (0–8 kHz) and brightness is energy.
+   * Open the **Library** to show the new take with its generation time and waveform.
 5. **Regeneration**: Click **"Regenerate"** to show a new variation generated from the same prompt settings.
 
 ---
@@ -480,9 +471,9 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 > **Model Answer**:  
 > *"Our PromptProcessor handles this gracefully by compiling both descriptors into the natural language conditioning string—e.g., 'in a calm, fast tempo style'. MusicGen's cross-attention layers attend to both conditioning tokens. In practice, this produces intriguing musical blends, such as a gentle acoustic piano playing brisk, upbeat arpeggios."*
 
-#### Q5: "How does the waveform displayed in Flutter stay in sync with the audio?"
+#### Q5: "How does the waveform in the web app stay in sync with the audio?"
 > **Model Answer**:  
-> *"We avoid client-side heavy signal decoding. The backend's `AudioProcessor` downsamples the raw 160,000 audio samples into a lightweight 100-point normalized amplitude vector that is sent with the API response. Flutter's custom canvas painter takes this array and paints the waveform bars, while the `AudioPlayerService` position stream drives the playback progress highlight in real time."*
+> *"The browser decodes the WAV once with the Web Audio API and draws the waveform and spectrogram from those same samples, so the picture and the sound come from identical data. Playback runs through an `AudioBufferSourceNode`, and the playhead position is computed from the audio context's clock, which keeps it locked to what you hear. For the library, the backend's 100-point `waveform_points` vector lets us draw a small waveform for every past take without downloading the audio."*
 
 ---
 
@@ -491,7 +482,7 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 ### 14.1 System Prerequisites
 * **Operating System**: macOS (Apple Silicon M1/M2/M3 recommended) or Linux.
 * **Python**: Version 3.11.x (configured in project virtual environment `./.venv`).
-* **Flutter SDK**: Version 3.41.x or higher with Dart 3.11.x.
+* **Node.js**: Version 20+ with npm (for the web frontend).
 
 ### 14.2 Step 1: Start the FastAPI Backend
 Open a terminal in the project root:
@@ -513,18 +504,20 @@ Expected response:
 }
 ```
 
-### 14.3 Step 2: Launch the Flutter Frontend
+### 14.3 Step 2: Launch the Web Frontend
 Open a second terminal window:
 ```bash
-# 1. Navigate to the flutter_app directory
-cd MuseAI/flutter_app
+# 1. Navigate to the web app
+cd MuseAI/web
 
-# 2. Ensure Flutter packages are up-to-date
-flutter pub get
+# 2. Point the app at the backend (first time only)
+cp .env.example .env    # VITE_API_URL=http://127.0.0.1:8000
 
-# 3. Launch on macOS Desktop (or Chrome web / mobile simulator)
-flutter run -d macos
+# 3. Install dependencies and start the dev server
+npm install
+npm run dev -- --port 5180
 ```
+Open `http://localhost:5180` in your browser.
 
 ### 14.4 Step 3: Run the Verification Test Suite
 ```bash

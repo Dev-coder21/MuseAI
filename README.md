@@ -68,8 +68,6 @@ MuseAI/
 │   └── test_generation.py
 ├── data/
 │   └── evaluation/           # Human evaluation framework & records
-├── PROJECT_SPEC.md           # Authoritative Project Specification
-├── BUILD_STATUS.md           # Build Tracker & Test Verification Results
 └── README.md
 ```
 
