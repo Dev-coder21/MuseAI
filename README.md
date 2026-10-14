@@ -84,13 +84,15 @@ MuseAI/
 
 ### 2. Running the FastAPI Backend
 
-Activate the Python 3.11 environment and start the server:
+From the repository root, create a Python 3.11 virtual environment, install the backend dependencies and start the server:
 
 ```bash
-# Activate virtual environment
-source /Users/devtrivedi/miniconda3/bin/activate /Users/devtrivedi/MuseAI/.venv
+# Create and activate a virtual environment (first time only: create + install)
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
 
-# Launch FastAPI with Uvicorn
+# Launch FastAPI with Uvicorn (run from the repository root)
 PYTHONPATH=. uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 

@@ -497,7 +497,7 @@ Use this structured outline to build your presentation slides (PowerPoint / Goog
 Open a terminal in the project root:
 ```bash
 # 1. Navigate to the project directory
-cd /Users/devtrivedi/Desktop/MuseAI
+cd MuseAI
 
 # 2. Launch FastAPI with Uvicorn using the verified virtual environment
 PYTHONPATH=. .venv/bin/uvicorn backend.app:app --host 127.0.0.1 --port 8000
@@ -517,7 +517,7 @@ Expected response:
 Open a second terminal window:
 ```bash
 # 1. Navigate to the flutter_app directory
-cd /Users/devtrivedi/Desktop/MuseAI/flutter_app
+cd MuseAI/flutter_app
 
 # 2. Ensure Flutter packages are up-to-date
 flutter pub get
@@ -528,7 +528,7 @@ flutter run -d macos
 
 ### 14.4 Step 3: Run the Verification Test Suite
 ```bash
-cd /Users/devtrivedi/Desktop/MuseAI
+cd MuseAI
 
 # Run automated backend tests
 PYTHONPATH=. .venv/bin/pytest -v
