@@ -49,7 +49,11 @@ export default function App() {
   const [histErr, setHistErr] = useState<string | null>(null)
   const [histLoading, setHistLoading] = useState(true)
   const [fresh, setFresh] = useState<Set<string>>(new Set())
-  const [intro, setIntro] = useState(!RM)
+  // the 3D intro plays once per browser session, not on every reload
+  const [intro, setIntro] = useState(() => {
+    if (RM) return false
+    try { return sessionStorage.getItem('muse-intro') !== '1' } catch { return true }
+  })
   const deckRef = useRef<HTMLDivElement>(null)
   const rackRef = useRef<HTMLDivElement>(null)
   const scrollRot = useRef(0)
@@ -105,6 +109,7 @@ export default function App() {
   const finishIntro = useCallback(() => {
     // Hide the intro first so the iris sits over the real hero, then close onto the disc.
     setIntro(false)
+    try { sessionStorage.setItem('muse-intro', '1') } catch { /* storage unavailable */ }
     requestAnimationFrame(() => iris(enterApp))
   }, [])
 
