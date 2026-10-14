@@ -1,9 +1,7 @@
 import logging
 import uuid
-from pathlib import Path
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import (
@@ -35,7 +33,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for Flutter app (desktop, web, mobile)
+# Enable CORS for the React web app in web/ (dev server, LAN devices)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -193,10 +191,3 @@ def regenerate_music(req: RegenerateRequest):
 def get_history(limit: int = 20):
     """Returns list of past generation records."""
     return HistoryManager.list_history(limit=limit)
-
-
-# Mount compiled Flutter Web UI if available
-flutter_web_path = Path(__file__).resolve().parent.parent / "flutter_app" / "build" / "web"
-if flutter_web_path.exists():
-    app.mount("/app", StaticFiles(directory=str(flutter_web_path), html=True), name="flutter_app")
-

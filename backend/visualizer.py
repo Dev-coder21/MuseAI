@@ -11,7 +11,7 @@ import numpy as np
 class Visualizer:
     """
     Generates high-quality PNG visualization images for Waveforms and Spectrograms
-    from audio files for display in the Flutter UI.
+    from audio files, served by the API for the web frontend.
     """
 
     @staticmethod
